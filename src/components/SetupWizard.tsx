@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useAppStore } from "../store/useAppStore";
+import { getEnvDefaults } from "../utils/envDefaults";
 
 const STEPS = [
   {
@@ -37,12 +38,13 @@ const FIELD_CONFIG: Record<string, { label: string; placeholder: string; type?: 
 export function SetupWizard() {
   const { setApiKeys, setSetupComplete, setView } = useAppStore();
   const [step, setStep] = useState(0);
+  const envDefaults = getEnvDefaults();
   const [keys, setKeys] = useState({
-    acrcloud_host: "",
-    acrcloud_key: "",
-    acrcloud_secret: "",
-    genius_key: "",
-    libretranslate_url: "https://libretranslate.com",
+    acrcloud_host: envDefaults.acrcloud_host || "",
+    acrcloud_key: envDefaults.acrcloud_key || "",
+    acrcloud_secret: envDefaults.acrcloud_secret || "",
+    genius_key: envDefaults.genius_key || "",
+    libretranslate_url: envDefaults.libretranslate_url || "https://libretranslate.com",
   });
 
   const currentStep = STEPS[step];

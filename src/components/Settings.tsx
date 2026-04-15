@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAppStore } from "../store/useAppStore";
+import { getEnvDefaults } from "../utils/envDefaults";
 
 interface SettingsProps {
   onClose: () => void;
@@ -7,6 +8,7 @@ interface SettingsProps {
 
 export function Settings({ onClose }: SettingsProps) {
   const { apiKeys, setApiKeys, setSetupComplete } = useAppStore();
+  const envDefaults = getEnvDefaults();
 
   const [keys, setKeys] = useState({
     acrcloud_host: apiKeys.acrcloud_host || "",
@@ -30,7 +32,7 @@ export function Settings({ onClose }: SettingsProps) {
     setApiKeys(keys);
     setSetupComplete(true);
 
-    // Persist to localStorage as fallback (Tauri store used in production)
+    // Persist to localStorage (overrides env defaults on next load)
     try {
       localStorage.setItem("karalingo_keys", JSON.stringify(keys));
     } catch {
@@ -72,12 +74,14 @@ export function Settings({ onClose }: SettingsProps) {
                 placeholder="identify-eu-west-1.acrcloud.com"
                 value={keys.acrcloud_host}
                 onChange={(v) => updateKey("acrcloud_host", v)}
+                envValue={envDefaults.acrcloud_host}
               />
               <InputField
                 label="Access Key"
                 placeholder="Your ACRCloud access key"
                 value={keys.acrcloud_key}
                 onChange={(v) => updateKey("acrcloud_key", v)}
+                envValue={envDefaults.acrcloud_key}
               />
               <InputField
                 label="Access Secret"
@@ -85,6 +89,7 @@ export function Settings({ onClose }: SettingsProps) {
                 value={keys.acrcloud_secret}
                 onChange={(v) => updateKey("acrcloud_secret", v)}
                 type="password"
+                envValue={envDefaults.acrcloud_secret}
               />
             </div>
           </section>
@@ -105,6 +110,7 @@ export function Settings({ onClose }: SettingsProps) {
               placeholder="Your Genius API access token"
               value={keys.genius_key}
               onChange={(v) => updateKey("genius_key", v)}
+              envValue={envDefaults.genius_key}
             />
           </section>
 
@@ -118,6 +124,7 @@ export function Settings({ onClose }: SettingsProps) {
               placeholder="https://libretranslate.com"
               value={keys.libretranslate_url}
               onChange={(v) => updateKey("libretranslate_url", v)}
+              envValue={envDefaults.libretranslate_url}
             />
             <p className="text-xs text-gray-500 mt-1.5">
               Use a self-hosted instance or the public endpoint
@@ -162,21 +169,37 @@ function InputField({
   value,
   onChange,
   type = "text",
+  envValue,
 }: {
   label: string;
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
+  envValue?: string;
 }) {
+  const hasEnv = !!envValue;
+  const isFromEnv = hasEnv && value === envValue;
+
   return (
     <div>
-      <label className="block text-xs text-gray-400 mb-1">{label}</label>
+      <div className="flex items-center justify-between mb-1">
+        <label className="block text-xs text-gray-400">{label}</label>
+        {hasEnv && (
+          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+            isFromEnv
+              ? "bg-emerald-500/15 text-emerald-400"
+              : "bg-gray-500/15 text-gray-500"
+          }`}>
+            {isFromEnv ? "from .env" : ".env overridden"}
+          </span>
+        )}
+      </div>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
+        placeholder={hasEnv ? `Default: ${type === "password" ? "••••••" : envValue}` : placeholder}
         className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2
                    text-sm text-gray-200 placeholder-gray-600
                    focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30

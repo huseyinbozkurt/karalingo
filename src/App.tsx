@@ -8,6 +8,7 @@ import { Settings } from "./components/Settings";
 import { SetupWizard } from "./components/SetupWizard";
 import { ProcessingOverlay } from "./components/ProcessingOverlay";
 import { fetchLyricsChain } from "./services/lyricsService";
+import { getEnvDefaults, mergeKeys } from "./utils/envDefaults";
 
 export default function App() {
   const {
@@ -15,7 +16,6 @@ export default function App() {
     setView,
     song,
     apiKeys,
-    setupComplete,
     setApiKeys,
     setSetupComplete,
     processingStep,
@@ -26,26 +26,33 @@ export default function App() {
 
   const [showSettings, setShowSettings] = useState(false);
 
-  // Load saved keys on mount
+  // Load env defaults + saved keys on mount, decide if setup is needed
   useEffect(() => {
+    const envDefaults = getEnvDefaults();
+    let userKeys = {};
+    let hasSavedKeys = false;
     try {
       const saved = localStorage.getItem("karalingo_keys");
       if (saved) {
-        const keys = JSON.parse(saved);
-        setApiKeys(keys);
-        setSetupComplete(true);
+        userKeys = JSON.parse(saved);
+        hasSavedKeys = true;
       }
     } catch {
       // first run
     }
-  }, [setApiKeys, setSetupComplete]);
 
-  // Show setup wizard on first run
-  useEffect(() => {
-    if (!setupComplete) {
+    const merged = mergeKeys(envDefaults, userKeys);
+    setApiKeys(merged);
+
+    // Skip setup if user previously saved keys OR env provides them
+    const hasEnvKeys = !!(envDefaults.acrcloud_host || envDefaults.acrcloud_key);
+    if (hasSavedKeys || hasEnvKeys) {
+      setSetupComplete(true);
+      setView("main");
+    } else {
       setView("setup");
     }
-  }, [setupComplete, setView]);
+  }, [setApiKeys, setSetupComplete, setView]);
 
   // Auto-fetch lyrics via fallback chain when triggered
   useEffect(() => {

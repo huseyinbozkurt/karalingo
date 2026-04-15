@@ -6,3 +6,11 @@ src-tauri/target/
 __pycache__/
 *.pyc
 separated/
+
+# Environment files (may contain secrets)
+.env
+.env.local
+.env.prod
+.env.production
+.env.*.local
+# .env.public is the committed template — do NOT gitignore it
