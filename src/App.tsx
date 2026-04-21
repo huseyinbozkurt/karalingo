@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAppStore } from "./store/useAppStore";
 import { RecognitionButton } from "./components/RecognitionButton";
 import { LyricsDisplay } from "./components/LyricsDisplay";
@@ -23,8 +23,6 @@ export default function App() {
     setLyrics,
     setShowManualLyricsInput,
   } = useAppStore();
-
-  const [showSettings, setShowSettings] = useState(false);
 
   // Load env defaults + saved keys on mount, decide if setup is needed
   useEffect(() => {
@@ -100,7 +98,7 @@ export default function App() {
     return <SetupWizard />;
   }
 
-  return <AppMain showSettings={showSettings} setShowSettings={setShowSettings} />;
+  return <AppMain />;
 }
 
 const SOURCE_BADGE_COLORS: Record<string, string> = {
@@ -128,12 +126,14 @@ function LyricsSourceBadge() {
   );
 }
 
-function AppMain({ showSettings, setShowSettings }: { showSettings: boolean; setShowSettings: (v: boolean) => void }) {
+function AppMain() {
   const {
     song,
     lyrics,
     processingStep,
     processingMessage,
+    showSettings,
+    setShowSettings,
   } = useAppStore();
 
   return (
@@ -174,6 +174,11 @@ function AppMain({ showSettings, setShowSettings }: { showSettings: boolean; set
           {!song ? (
             <div className="flex flex-col items-center">
               <RecognitionButton />
+              {processingStep === "error" && processingMessage && (
+                <p className="mt-4 text-sm text-red-400 text-center max-w-xs">
+                  {processingMessage}
+                </p>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center gap-4 w-full max-w-sm">

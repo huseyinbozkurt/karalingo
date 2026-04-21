@@ -6,14 +6,15 @@ import { useAppStore } from "../store/useAppStore";
 const RECORD_DURATION = 12000;
 
 export function RecognitionButton() {
-  const { apiKeys, setProcessing, setSong, setOriginalAudioPath } = useAppStore();
+  const { apiKeys, setProcessing, setSong, setOriginalAudioPath, setShowSettings } = useAppStore();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingProgress, setRecordingProgress] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
 
   const handleRecognize = useCallback(async () => {
     if (!apiKeys.acrcloud_host || !apiKeys.acrcloud_key || !apiKeys.acrcloud_secret) {
-      useAppStore.getState().setView("settings");
+      setProcessing("error", "ACRCloud API keys required — configure them in Settings");
+      setShowSettings(true);
       return;
     }
 
@@ -95,7 +96,7 @@ export function RecognitionButton() {
       setRecordingProgress(0);
       setProcessing("error", `Recognition failed: ${err}`);
     }
-  }, [apiKeys, setProcessing, setSong]);
+  }, [apiKeys, setProcessing, setSong, setShowSettings]);
 
   const handleFileImport = useCallback(async () => {
     try {

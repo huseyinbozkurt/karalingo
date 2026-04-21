@@ -94,8 +94,8 @@ pub async fn recognize_song(
     let signature_version = "1";
 
     let string_to_sign = format!(
-        "{}\n{}\n{}\n{}\n{}",
-        http_method, http_uri, access_key, data_type, timestamp
+        "{}\n{}\n{}\n{}\n{}\n{}",
+        http_method, http_uri, access_key, data_type, signature_version, timestamp
     );
 
     let mut mac = HmacSha1::new_from_slice(access_secret.as_bytes())
@@ -476,6 +476,11 @@ struct DetectResponse {
     language: String,
 }
 
+#[derive(Deserialize)]
+struct LibreTranslateError {
+    error: String,
+}
+
 #[tauri::command]
 pub async fn translate_text(
     texts: Vec<String>,
@@ -503,9 +508,20 @@ pub async fn translate_text(
             .await
             .map_err(|e| format!("Translation request failed: {}", e))?;
 
-        let result: TranslateResponse = resp
-            .json()
+        let status = resp.status();
+        let text = resp
+            .text()
             .await
+            .map_err(|e| format!("Translation read error: {}", e))?;
+
+        if !status.is_success() {
+            if let Ok(err) = serde_json::from_str::<LibreTranslateError>(&text) {
+                return Err(format!("LibreTranslate error: {}", err.error));
+            }
+            return Err(format!("LibreTranslate returned status {}", status));
+        }
+
+        let result: TranslateResponse = serde_json::from_str(&text)
             .map_err(|e| format!("Translation parse error: {}", e))?;
 
         for line in result.translated_text.split('\n') {
@@ -528,9 +544,20 @@ pub async fn detect_language(text: String, api_url: String) -> Result<String, St
         .await
         .map_err(|e| format!("Detection request failed: {}", e))?;
 
-    let results: Vec<DetectResponse> = resp
-        .json()
+    let status = resp.status();
+    let text = resp
+        .text()
         .await
+        .map_err(|e| format!("Detection read error: {}", e))?;
+
+    if !status.is_success() {
+        if let Ok(err) = serde_json::from_str::<LibreTranslateError>(&text) {
+            return Err(format!("LibreTranslate error: {}", err.error));
+        }
+        return Err(format!("LibreTranslate returned status {}", status));
+    }
+
+    let results: Vec<DetectResponse> = serde_json::from_str(&text)
         .map_err(|e| format!("Detection parse error: {}", e))?;
 
     results

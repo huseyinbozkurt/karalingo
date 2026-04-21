@@ -14,3 +14,4 @@ separated/
 .env.production
 .env.*.local
 # .env.public is the committed template — do NOT gitignore it
+tsconfig.tsbuildinfo

@@ -48,7 +48,9 @@ interface AppState {
   setupComplete: boolean;
   setSetupComplete: (complete: boolean) => void;
 
-  // Manual lyrics
+  // UI
+  showSettings: boolean;
+  setShowSettings: (show: boolean) => void;
   showManualLyricsInput: boolean;
   setShowManualLyricsInput: (show: boolean) => void;
 
@@ -110,7 +112,9 @@ export const useAppStore = create<AppState>((set) => ({
   setupComplete: false,
   setSetupComplete: (setupComplete) => set({ setupComplete }),
 
-  // Manual lyrics
+  // UI
+  showSettings: false,
+  setShowSettings: (showSettings) => set({ showSettings }),
   showManualLyricsInput: false,
   setShowManualLyricsInput: (showManualLyricsInput) => set({ showManualLyricsInput }),
 
